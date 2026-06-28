@@ -603,14 +603,12 @@ const JT_BEN = [
   {ic:'🎨',t:'2 слоя нанесения',d:'1 ведро (20 кг) рассчитано на 7 м² в 2 слоя — оптимальная плотность и долговечность.'},
   {ic:'🛡️',t:'Атмосферостойкость',d:'Устойчив к морозам, дождю и UV-излучению. Сохраняет цвет и фактуру более 15 лет.'},
   {ic:'✨',t:'Лак блеск',d:'Финишное покрытие усиливает текстуру и защищает поверхность от влаги и загрязнений.'},
-  {ic:'🔧',t:'Монтаж под ключ',d:'Профессиональный монтаж с защитой прилегающих поверхностей. Уборка мусора включена.'},
 ];
 const DP_BEN = [
   {ic:'🏛️',t:'Фибропанели 250/300',d:'Декоративные панели с имитацией натурального камня. Лёгкий вес — около 28 кг/м².'},
   {ic:'🔥',t:'Утеплитель внутри',d:'Пенопласт М35 толщиной 30 мм обеспечивает дополнительную теплоизоляцию фасада.'},
   {ic:'💧',t:'Покрытие травертином',d:'Поверх панелей наносится жидкий травертин — создаёт монолитный вид фасада.'},
   {ic:'🎯',t:'Декор обрамления',d:'Угловые элементы, карнизы, обрамления окон и дверей завершают профессиональный вид.'},
-  {ic:'🔧',t:'Монтаж под ключ',d:'От анкеровки до финишной покраски. Работа на фасадах любой сложности.'},
 ];
 
 const PROCESS_JT = [
@@ -661,7 +659,10 @@ function renderMatTable(tbodyId, mats, area, matType) {
            ${userQ !== calcQ ? `<span class="qty-hint">авто: ${calcQ}</span>` : `<span class="qty-hint">авто</span>`}
          </td>
          <td>${m.u||'шт'}</td>
-         <td>${fmt(m.p)}</td>
+         <td style="text-align:center">
+           <input type="number" class="qty-input" style="width:70px" value="${m.p}" min="0" step="100"
+             onchange="setMatPrice('${matType}',${i},+this.value)">
+         </td>
          <td style="color:#2b7878;font-weight:600">${enabled?fmt(sum):'–'}</td>`
       : `<td>${расход}</td>
          <td style="color:#2b7878">${fmt(cpm(m))}</td>`;
@@ -685,6 +686,12 @@ function toggleMat(matType, idx, checked) {
 function setMatQty(matType, idx, val) {
   const mats = matType === 'jt' ? JT_MAT : DP_MAT;
   mats[idx].qtyOvr = isNaN(val) || val < 0 ? undefined : val;
+  calc();
+}
+
+function setMatPrice(matType, idx, val) {
+  const mats = matType === 'jt' ? JT_MAT : DP_MAT;
+  if (!isNaN(val) && val >= 0) mats[idx].p = val;
   calc();
 }
 
