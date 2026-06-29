@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Генератор КП — Вентилируемые фасады</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #1a3a5c;
+      --accent2: #2a5a8c;
+      --gold: #b8943a;
+      --gold-bg: #fdf6e7;
+      --gray-50: #f8f8f6;
+      --gray-100: #f0f0ec;
+      --gray-200: #e0e0d8;
+      --gray-400: #9a9a90;
+      --gray-600: #5a5a54;
+      --white: #fff;
+      --black: #111;
+      --green: #1a7a45;
+      --red: #b00;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--gray-50);
+      color: var(--black);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── LAYOUT ── */
+    .app-header {
+      background: var(--accent);
+      color: #fff;
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .app-header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; }
+    .app-header span { font-size: 13px; color: rgba(255,255,255,0.55); }
+
+    .header-actions { display: flex; gap: 10px; }
+    .btn { padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: 'Inter', sans-serif; transition: all 0.18s; }
+    .btn-ghost { background: rgba(255,255,255,0.12); color: #fff; }
+    .btn-ghost:hover { background: rgba(255,255,255,0.2); }
+    .btn-gold { background: var(--gold); color: #fff; }
+    .btn-gold:hover { background: #a07f30; transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-danger { background: #fee; color: var(--red); border: 1px solid #fcc; }
+    .btn-danger:hover { background: #fcc; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      min-height: calc(100vh - 52px);
+    }
+
+    /* ── FORM PANEL ── */
+    .form-panel {
+      background: var(--white);
+      border-right: 1px solid var(--gray-200);
+      overflow-y: auto;
+      max-height: calc(100vh - 52px);
+      position: sticky;
+      top: 52px;
+    }
+
+    .section-block {
+      border-bottom: 1px solid var(--gray-100);
+      padding: 20px 24px;
+    }
+
+    .section-block-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-block-title::before {
+      content: '';
+      width: 14px;
+      height: 2px;
+      background: var(--gold);
+      display: block;
+    }
+
+    .fgroup { margin-bottom: 12px; }
+    .fgroup label { display: block; font-size: 12px; font-weight: 500; color: var(--gray-600); margin-bottom: 5px; }
+    .fgroup input, .fgroup select, .fgroup textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      color: var(--black);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.18s;
+    }
+    .fgroup input:focus, .fgroup select:focus, .fgroup textarea:focus { border-color: var(--accent); }
+    .fgroup textarea { resize: vertical; min-height: 60px; }
+    .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .frow3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+    /* ── MEASUREMENT SECTIONS ── */
+    .measure-item {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .measure-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .measure-name { font-size: 12px; font-weight: 600; color: var(--accent); }
+    .measure-area { font-size: 12px; color: var(--gray-400); }
+
+    .del-btn {
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .del-btn:hover { background: #fee; color: var(--red); }
+
+    .add-btn {
+      width: 100%;
+      padding: 9px;
+      background: var(--gray-50);
+      border: 1.5px dashed var(--gray-200);
+      border-radius: 6px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s;
+      font-family: 'Inter', sans-serif;
+    }
+    .add-btn:hover { border-color: var(--accent); background: #e8f0f8; }
+
+    /* ── WORK ITEMS ── */
+    .work-item {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+
+    .work-item-name { font-size: 12px; font-weight: 600; color: var(--black); margin-bottom: 8px; }
+
+    .price-input-wrap { position: relative; }
+    .price-input-wrap input { padding-right: 40px; }
+    .price-unit {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: var(--gray-400);
+      pointer-events: none;
+    }
+
+    .work-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .toggle-switch {
+      width: 36px;
+      height: 20px;
+      background: var(--gray-200);
+      border-radius: 10px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-switch.on { background: var(--accent); }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: left 0.2s;
+    }
+    .toggle-switch.on::after { left: 19px; }
+    .toggle-label { font-size: 12px; color: var(--gray-600); }
+
+    /* ── PREVIEW PANEL ── */
+    .preview-panel {
+      padding: 32px;
+      overflow-y: auto;
+      background: var(--gray-100);
+    }
+
+    .preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .preview-title { font-size: 13px; color: var(--gray-600); font-weight: 500; }
+    .preview-actions { display: flex; gap: 10px; }
+
+    /* ── KP DOCUMENT ── */
+    .kp-doc {
+      background: #fff;
+      width: 100%;
+      max-width: 860px;
+      margin: 0 auto;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .kp-header {
+      background: var(--accent);
+      padding: 36px 48px 28px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .kp-company-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+
+    .kp-company-slogan {
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.3px;
+    }
+
+    .kp-doc-info { text-align: right; }
+    .kp-doc-number { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 4px; }
+    .kp-doc-date { font-size: 12px; color: rgba(255,255,255,0.45); }
+    .kp-doc-valid { font-size: 11px; color: var(--gold); margin-top: 4px; }
+
+    .kp-strip {
+      background: var(--gold);
+      height: 4px;
+    }
+
+    .kp-body { padding: 36px 48px; }
+
+    .kp-parties {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 28px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .kp-party-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 8px;
+    }
+
+    .kp-party-name { font-size: 16px; font-weight: 700; color: var(--black); margin-bottom: 4px; }
+    .kp-party-detail { font-size: 12px; color: var(--gray-600); line-height: 1.6; }
+
+    .kp-object-block {
+      background: var(--gray-50);
+      border-left: 3px solid var(--gold);
+      padding: 14px 18px;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 28px;
+    }
+
+    .kp-object-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+
+    .kp-object-name { font-size: 15px; font-weight: 600; color: var(--black); margin-bottom: 2px; }
+    .kp-object-addr { font-size: 13px; color: var(--gray-600); }
+
+    .kp-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin: 24px 0 12px;
+    }
+
+    /* TABLES */
+    .kp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .kp-table thead tr {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .kp-table thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .kp-table thead th:last-child, .kp-table td:last-child { text-align: right; }
+    .kp-table thead th:nth-child(2), .kp-table td:nth-child(2),
+    .kp-table thead th:nth-child(3), .kp-table td:nth-child(3),
+    .kp-table thead th:nth-child(4), .kp-table td:nth-child(4) { text-align: center; }
+
+    .kp-table tbody tr:nth-child(even) { background: var(--gray-50); }
+
+    .kp-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-100);
+      color: var(--black);
+      vertical-align: middle;
+    }
+
+    .kp-table .item-name { font-weight: 500; }
+    .kp-table .item-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+
+    .kp-table tfoot td {
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--gray-600);
+      border: none;
+    }
+
+    .kp-table tfoot .subtotal-row td { border-top: 1px solid var(--gray-200); }
+
+    .kp-totals {
+      background: var(--accent);
+      border-radius: 8px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 24px;
+    }
+
+    .kp-totals-breakdown { display: flex; gap: 32px; }
+
+    .kp-total-item { }
+    .kp-total-label { font-size: 11px; color: rgba(255,255,255,0.55); margin-bottom: 2px; }
+    .kp-total-val { font-size: 16px; font-weight: 700; color: #fff; }
+
+    .kp-total-main { text-align: right; }
+    .kp-total-main-label { font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 4px; }
+    .kp-total-main-val { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -1px; }
+    .kp-total-main-nds { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+    .kp-terms {
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .kp-term-item {
+      background: var(--gray-50);
+      border-radius: 6px;
+      padding: 14px;
+    }
+
+    .kp-term-label { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--gray-400); margin-bottom: 4px; }
+    .kp-term-val { font-size: 14px; font-weight: 600; color: var(--black); }
+
+    .kp-note {
+      margin-top: 20px;
+      padding: 14px 16px;
+      background: var(--gold-bg);
+      border-left: 3px solid var(--gold);
+      border-radius: 0 6px 6px 0;
+      font-size: 12px;
+      color: var(--gray-600);
+      line-height: 1.65;
+    }
+
+    .kp-signatures {
+      margin-top: 36px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .kp-sig-label { font-size: 11px; color: var(--gray-400); margin-bottom: 32px; }
+    .kp-sig-line { border-bottom: 1px solid var(--gray-400); margin-bottom: 6px; }
+    .kp-sig-name { font-size: 12px; color: var(--gray-600); }
+
+    .kp-footer {
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+      padding: 16px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .kp-footer-contacts { font-size: 11px; color: var(--gray-400); line-height: 1.7; }
+    .kp-footer-page { font-size: 11px; color: var(--gray-400); }
+
+    /* ── MEASURES SUMMARY in KP ── */
+    .kp-measures-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .kp-measure-chip {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+
+    .kp-measure-chip-name { font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 2px; }
+    .kp-measure-chip-dims { font-size: 12px; color: var(--black); margin-bottom: 1px; }
+    .kp-measure-chip-area { font-size: 11px; color: var(--gray-400); }
+
+    /* ── PRINT ── */
+    @media print {
+      body { background: #fff; }
+      .app-header, .form-panel, .preview-toolbar { display: none !important; }
+      .main-layout { display: block; }
+      .preview-panel { padding: 0; background: #fff; }
+      .kp-doc { box-shadow: none; max-width: 100%; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    /* ── TABS ── */
+    .tab-bar {
+      display: flex;
+      border-bottom: 1px solid var(--gray-100);
+      background: var(--white);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .tab-btn {
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-400);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+      white-space: nowrap;
+    }
+
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn:hover:not(.active) { color: var(--black); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-draft { background: #f0f0f0; color: var(--gray-600); }
+    .badge-ready { background: #e6f5ec; color: var(--green); }
+
+    .total-display {
+      background: var(--accent);
+      color: #fff;
+      text-align: center;
+      padding: 14px;
+      margin: 0;
+    }
+
+    .total-display-num { font-size: 22px; font-weight: 700; }
+    .total-display-label { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ── APP HEADER ── -->
+<div class="app-header">
+  <div>
+    <h1>Генератор КП · Вентилируемые фасады</h1>
+    <span>Заполните форму → предпросмотр обновляется в реальном времени</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost" onclick="resetForm()">↺ Сбросить</button>
+    <button class="btn btn-gold" onclick="window.print()">⬇ Скачать PDF / Печать</button>
+  </div>
+</div>
+
+<div class="main-layout">
+
+  <!-- ── FORM PANEL ── -->
+  <div class="form-panel">
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('company')">🏢 Компания</button>
+      <button class="tab-btn" onclick="switchTab('client')">👤 Клиент</button>
+      <button class="tab-btn" onclick="switchTab('measures')">📐 Замеры</button>
+      <button class="tab-btn" onclick="switchTab('works')">🔧 Работы</button>
+      <button class="tab-btn" onclick="switchTab('terms')">📋 Условия</button>
+    </div>
+
+    <!-- TAB: COMPANY -->
+    <div id="tab-company" class="tab-content active">
+      <div class="section-block">
+        <div class="section-block-title">Ваша компания</div>
+        <div class="fgroup">
+          <label>Название компании</label>
+          <input id="co_name" type="text" value="ТОО «FasadPRO»" oninput="render()" />
+        </div>
+        <div class="fgroup">
+          <label>Слоган / специализация</label>
+          <input id="co_slogan" type="text" value="Монтаж вентилируемых фасадов под ключ" oninput="render()" />
+        </div>
+        <div class="frow">
+          <div class="fgroup">
+            <label>Телефон</label>
+            <input id="co_phone" type="text" value="+7 700 123 45 67" oninput="render()" />
+          </div>
+          <div class="fgroup">
+            <label>Email</label>
+            <input id="co_email" type="text" value="info@fasadpro.kz" oninput="render()" />
+          </div>
+        </div>
+        <div class="fgroup">
+          <label>Адрес / город</label>
+          <input id="co_addr" type="text" value="г. Алматы, ул. Рыскулова, 103" oninput="render()" />
+        </div>
+        <div class="frow">
+          <div class="fgroup">
+            <label>Менеджер КП</label>
+            <input id="co_manager" type="text" value="Асель Нурланова" oninput="render()" />
+          </div>
+          <div class="fgroup">
+            <label>БИН</label>
+            <input id="co_bin" type="text" value="231140023456" oninput="render()" />
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-block-title">Номер и дата КП</div>
+        <div class="frow">
+          <div class="fgroup">
+            <label>Номер КП</label>
+            <input id="kp_num" type="text" value="КП-001" oninput="render()" />
+          </div>
+          <div class="fgroup">
+            <label>Дата</label>
+            <input id="kp_date" type="date" oninput="render()" />
+          </div>
+        </div>
+        <div class="fgroup">
+          <label>Действительно до</label>
+          <input id="kp_valid" type="date" oninput="render()" />
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CLIENT -->
+    <div id="tab-client" class="tab-content">
+      <div class="section-block">
+        <div class="section-block-title">Данные заказчика</div>
+        <div class="fgroup">
+          <label>Название / ФИО заказчика</label>
+          <input id="cl_name" type="text" placeholder="ТОО «Застройщик» или Иванов А.А." oninput="render()" />
+        </div>
+        <div class="frow">
+          <div class="fgroup">
+            <label>Контактное лицо</label>
+            <input id="cl_contact" type="text" placeholder="Имя" oninput="render()" />
+          </div>
+          <div class="fgroup">
+            <label>Телефон</label>
+            <input id="cl_phone" type="text" placeholder="+7 700..." oninput="render()" />
+          </div>
+        </div>
+        <div class="fgroup">
+          <label>Email</label>
+          <input id="cl_email" type="text" placeholder="client@mail.kz" oninput="render()" />
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-block-title">Объект</div>
+        <div class="fgroup">
+          <label>Название объекта</label>
+          <input id="obj_name" type="text" placeholder="ЖК «Название», офисное здание..." oninput="render()" />
+        </div>
+        <div class="fgroup">
+          <label>Адрес объекта</label>
+          <input id="obj_addr" type="text" placeholder="г. Алматы, ул. ..." oninput="render()" />
+        </div>
+        <div class="frow">
+          <div class="fgroup">
+            <label>Тип объекта</label>
+            <select id="obj_type" onchange="render()">
+              <option>Жилой дом / ЖК</option>
+              <option>Офисное здание</option>
+              <option>Торговый центр</option>
+              <option>Производственное здание</option>
+              <option>Школа / больница</option>
+              <option>Другое</option>
+            </select>
+          </div>
+          <div class="fgroup">
+            <label>Этажность</label>
+            <input id="obj_floors" type="number" placeholder="12" min="1" oninput="render()" />
+          </div>
+        </div>
+        <div class="fgroup">
+          <label>Тип панелей</label>
+          <select id="panel_type" onchange="updatePanelPrices(); render()">
+            <option value="akp">АКП (алюминиевый композит)</option>
+            <option value="hpl">HPL панели</option>
+            <option value="lin">Линеарные панели</option>
+            <option value="terra">Терракота / керамогранит</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: MEASURES -->
+    <div id="tab-measures" class="tab-content">
+      <div class="section-block">
+        <div class="section-block-title">Плоскости фасада</div>
+        <div id="measures-list"></div>
+        <button class="add-btn" onclick="addMeasure()">+ Добавить плоскость / секцию</button>
+      </div>
+
+      <div class="section-block">
+        <div class="section-block-title">Доборные элементы</div>
+        <div class="frow">
+          <div class="fgroup">
+            <label>Откосы, п.м.</label>
+            <input id="add_slopes" type="number" value="0" min="0" oninput="render()" />
+          </div>
+          <div class="fgroup">
+            <label>Отливы / парапеты, п.м.</label>
+            <input id="add_flashings" type="number" value="0" min="0" oninput="render()" />
+          </div>
+        </div>
+        <div class="fgroup">
+          <label>Герметизация стыков, п.м.</label>
+          <input id="add_sealant" type="number" value="0" min="0" oninput="render()" />
+        </div>
+        <div class="fgroup">
+          <label>Коэффициент сложности</label>
+          <select id="complexity" onchange="render()">
+            <option value="1.0">1.0 — Простой (прямые плоскости)</option>
+            <option value="1.1">1.1 — Средний (углы, ризалиты)</option>
+            <option value="1.2">1.2 — Сложный (нестандартные формы)</option>
+            <option value="1.35">1.35 — Особо сложный (кривые, башни)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: WORKS -->
+    <div id="tab-works" class="tab-content">
+      <div class="section-block">
+        <div class="section-block-title">Состав работ и расценки</div>
+        <p style="font-size:11px;color:var(--gray-400);margin-bottom:14px;line-height:1.6;">
+          Цены адаптированы под рынок Казахстана 2025 г. Редактируйте под ваши реальные расценки.
+        </p>
+
+        <div id="works-list"></div>
+
+      </div>
+
+      <div class="section-block">
+        <div class="section-block-title">Материалы (включены в КП)</div>
+        <div id="materials-list"></div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-block-title">НДС и скидка</div>
+        <div class="frow">
+          <div class="fgroup">
+            <label>НДС, %</label>
+            <input id="nds_rate" type="number" value="12" min="0" max="30" oninput="render()" />
+          </div>
+          <div class="fgroup">
+            <label>Скидка, %</label>
+            <input id="discount" type="number" value="0" min="0" max="50" oninput="render()" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: TERMS -->
+    <div id="tab-terms" class="tab-content">
+      <div class="section-block">
+        <div class="section-block-title">Условия сделки</div>
+        <div class="frow">
+          <div class="fgroup">
+            <label>Срок монтажа</label>
+            <input id="term_duration" type="text" value="30 рабочих дней" oninput="render()" />
+          </div>
+          <div class="fgroup">
+            <label>Гарантия</label>
+            <input id="term_warranty" type="text" value="3 года" oninput="render()" />
+          </div>
+        </div>
+        <div class="fgroup">
+          <label>Условия оплаты</label>
+          <input id="term_payment" type="text" value="50% аванс, 50% по завершении" oninput="render()" />
+        </div>
+        <div class="fgroup">
+          <label>Что включено в стоимость</label>
+          <textarea id="term_includes" oninput="render()">Подача заявок и разрешений
+Доставка материалов на объект
+Монтаж подсистемы и утеплителя
+Монтаж облицовочных панелей
+Установка доборных элементов
+Уборка и вывоз строительного мусора</textarea>
+        </div>
+        <div class="fgroup">
+          <label>Примечания / особые условия</label>
+          <textarea id="term_notes" oninput="render()">Стоимость строительных лесов рассчитывается отдельно при необходимости. Цены актуальны в течение срока действия КП.</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOTAL STRIP -->
+    <div class="total-display">
+      <div class="total-display-num" id="total-strip">0 ₸</div>
+      <div class="total-display-label">Итого с НДС</div>
+    </div>
+
+  </div>
+
+  <!-- ── PREVIEW PANEL ── -->
+  <div class="preview-panel">
+    <div class="preview-toolbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="preview-title">Предпросмотр коммерческого предложения</span>
+        <span class="status-badge badge-ready" id="status-badge">● Готово к печати</span>
+      </div>
+      <div class="preview-actions">
+        <button class="btn btn-primary" onclick="window.print()">🖨 Печать / PDF</button>
+      </div>
+    </div>
+
+    <div class="kp-doc" id="kp-doc">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── STATE ──
+const state = {
+  measures: [],
+  works: [],
+  materials: []
+};
+
+// Default work items (prices in tg/m²)
+const DEFAULT_WORKS = [
+  { id: 'prep', name: 'Подготовительные работы', sub: 'Разметка осей, расстановка реперов', unit: 'м²', price: 350, enabled: true, type: 'area' },
+  { id: 'anchor', name: 'Монтаж анкерных кронштейнов', sub: 'С подбором крепежа по типу стены', unit: 'м²', price: 1200, enabled: true, type: 'area' },
+  { id: 'subsys', name: 'Монтаж несущей подсистемы', sub: 'Вертикальный/горизонтальный профиль', unit: 'м²', price: 2200, enabled: true, type: 'area' },
+  { id: 'insul', name: 'Монтаж утеплителя с ветрозащитой', sub: 'Минвата 100–150 мм + мембрана', unit: 'м²', price: 1800, enabled: true, type: 'area' },
+  { id: 'panel', name: 'Монтаж облицовочных панелей', sub: 'АКП / HPL / Линеар', unit: 'м²', price: 3500, enabled: true, type: 'area' },
+  { id: 'slopes', name: 'Устройство откосов', sub: 'Металлические, оцинкованные', unit: 'п.м.', price: 7500, enabled: true, type: 'slopes' },
+  { id: 'flash', name: 'Отливы и парапеты', sub: 'Монтаж доборных элементов', unit: 'п.м.', price: 8000, enabled: true, type: 'flashings' },
+  { id: 'seal', name: 'Герметизация стыков', sub: 'Нейтральный силикон, расшивка', unit: 'п.м.', price: 1500, enabled: true, type: 'sealant' },
+  { id: 'scaf', name: 'Аренда строительных лесов', sub: 'На весь период монтажа', unit: 'м²', price: 900, enabled: false, type: 'area' },
+  { id: 'clean', name: 'Вывоз строительного мусора', sub: 'Уборка объекта по завершении', unit: 'паушально', price: 80000, enabled: true, type: 'fixed' },
+];
+
+const DEFAULT_MATERIALS = [
+  { id: 'm_panel', name: 'Облицовочные панели', sub: 'АКП Алюкобонд 4 мм', unit: 'м²', price: 8500, enabled: true, type: 'area' },
+  { id: 'm_sub', name: 'Подсистема (профиль + кронштейны)', sub: 'Сталь оцинкованная / алюминий', unit: 'м²', price: 3200, enabled: true, type: 'area' },
+  { id: 'm_ins', name: 'Утеплитель (минвата 100 мм)', sub: '+ крепёж тарельчатый', unit: 'м²', price: 2100, enabled: true, type: 'area' },
+  { id: 'm_mem', name: 'Ветрозащитная мембрана', sub: 'Изоспан А или аналог', unit: 'м²', price: 450, enabled: true, type: 'area' },
+  { id: 'm_dob', name: 'Доборные элементы (откосы, отливы)', sub: 'Оцинк. сталь с полимерным покрытием', unit: 'компл.', price: 0, enabled: true, type: 'fixed_per_lm' },
+];
+
+const PANEL_PRICE_PRESETS = {
+  akp:   { work_panel: 3500, m_panel: 8500, m_panel_sub: 'АКП Алюкобонд 4 мм' },
+  hpl:   { work_panel: 4800, m_panel: 14000, m_panel_sub: 'HPL Compact 8 мм' },
+  lin:   { work_panel: 4200, m_panel: 11000, m_panel_sub: 'Линеарная рейка Al 100 мм' },
+  terra: { work_panel: 5500, m_panel: 18000, m_panel_sub: 'Терракотовая плитка' },
+};
+
+// ── INIT ──
+function init() {
+  // Set default dates
+  const today = new Date();
+  const validTo = new Date(today);
+  validTo.setDate(today.getDate() + 14);
+  document.getElementById('kp_date').value = today.toISOString().slice(0,10);
+  document.getElementById('kp_valid').value = validTo.toISOString().slice(0,10);
+
+  // Init works
+  state.works = DEFAULT_WORKS.map(w => ({...w}));
+  state.materials = DEFAULT_MATERIALS.map(m => ({...m}));
+
+  addMeasure();
+  renderWorksList();
+  renderMaterialsList();
+  render();
+}
+
+// ── TABS ──
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── MEASURES ──
+let measureCounter = 0;
+function addMeasure() {
+  measureCounter++;
+  const id = 'msr_' + measureCounter;
+  state.measures.push({ id, name: 'Плоскость ' + measureCounter, w: '', h: '', deduct: 0 });
+  renderMeasuresList();
+}
+
+function renderMeasuresList() {
+  const el = document.getElementById('measures-list');
+  el.innerHTML = state.measures.map((m, i) => `
+    <div class="measure-item" id="${m.id}">
+      <div class="measure-header">
+        <span class="measure-name">${m.name}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="measure-area" id="${m.id}_area"></span>
+          <button class="del-btn" onclick="removeMeasure('${m.id}')">✕</button>
+        </div>
+      </div>
+      <div class="frow3">
+        <div class="fgroup" style="margin-bottom:0;">
+          <label>Название</label>
+          <input type="text" value="${m.name}" oninput="updateMeasure('${m.id}','name',this.value)" />
+        </div>
+        <div class="fgroup" style="margin-bottom:0;">
+          <label>Ширина, м</label>
+          <input type="number" value="${m.w}" min="0" step="0.1" oninput="updateMeasure('${m.id}','w',this.value)" />
+        </div>
+        <div class="fgroup" style="margin-bottom:0;">
+          <label>Высота, м</label>
+          <input type="number" value="${m.h}" min="0" step="0.1" oninput="updateMeasure('${m.id}','h',this.value)" />
+        </div>
+      </div>
+      <div class="fgroup" style="margin-top:8px;margin-bottom:0;">
+        <label>Вычеты (окна и проёмы), м²</label>
+        <div class="price-input-wrap">
+          <input type="number" value="${m.deduct}" min="0" step="0.1" oninput="updateMeasure('${m.id}','deduct',this.value)" />
+          <span class="price-unit">м²</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  render();
+}
+
+function updateMeasure(id, field, val) {
+  const m = state.measures.find(x => x.id === id);
+  if (!m) return;
+  m[field] = field === 'name' ? val : parseFloat(val) || 0;
+  const area = Math.max(0, (m.w * m.h) - m.deduct);
+  const el = document.getElementById(id + '_area');
+  if (el) el.textContent = area.toFixed(1) + ' м²';
+  render();
+}
+
+function removeMeasure(id) {
+  state.measures = state.measures.filter(x => x.id !== id);
+  renderMeasuresList();
+}
+
+// ── WORKS LIST ──
+function renderWorksList() {
+  const el = document.getElementById('works-list');
+  el.innerHTML = state.works.map(w => `
+    <div class="work-item">
+      <div class="work-toggle">
+        <div class="toggle-switch ${w.enabled ? 'on' : ''}" onclick="toggleWork('${w.id}')"></div>
+        <span class="work-item-name" style="margin-bottom:0;">${w.name}</span>
+      </div>
+      ${w.enabled ? `
+        <div class="frow">
+          <div class="fgroup" style="margin-bottom:0;">
+            <label>Цена (${w.unit})</label>
+            <div class="price-input-wrap">
+              <input type="number" value="${w.price}" min="0" oninput="updateWork('${w.id}','price',this.value)" />
+              <span class="price-unit">₸</span>
+            </div>
+          </div>
+          <div class="fgroup" style="margin-bottom:0;">
+            <label>Описание</label>
+            <input type="text" value="${w.sub}" oninput="updateWork('${w.id}','sub',this.value)" />
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+function toggleWork(id) {
+  const w = state.works.find(x => x.id === id);
+  if (w) { w.enabled = !w.enabled; renderWorksList(); render(); }
+}
+
+function updateWork(id, field, val) {
+  const w = state.works.find(x => x.id === id);
+  if (w) { w[field] = field === 'price' ? (parseFloat(val) || 0) : val; render(); }
+}
+
+// ── MATERIALS LIST ──
+function renderMaterialsList() {
+  const el = document.getElementById('materials-list');
+  el.innerHTML = state.materials.map(m => `
+    <div class="work-item">
+      <div class="work-toggle">
+        <div class="toggle-switch ${m.enabled ? 'on' : ''}" onclick="toggleMaterial('${m.id}')"></div>
+        <span class="work-item-name" style="margin-bottom:0;">${m.name}</span>
+      </div>
+      ${m.enabled ? `
+        <div class="frow">
+          <div class="fgroup" style="margin-bottom:0;">
+            <label>Цена (${m.unit})</label>
+            <div class="price-input-wrap">
+              <input type="number" value="${m.price}" min="0" oninput="updateMaterial('${m.id}','price',this.value)" />
+              <span class="price-unit">₸</span>
+            </div>
+          </div>
+          <div class="fgroup" style="margin-bottom:0;">
+            <label>Марка / описание</label>
+            <input type="text" value="${m.sub}" oninput="updateMaterial('${m.id}','sub',this.value)" />
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+function toggleMaterial(id) {
+  const m = state.materials.find(x => x.id === id);
+  if (m) { m.enabled = !m.enabled; renderMaterialsList(); render(); }
+}
+
+function updateMaterial(id, field, val) {
+  const m = state.materials.find(x => x.id === id);
+  if (m) { m[field] = field === 'price' ? (parseFloat(val) || 0) : val; render(); }
+}
+
+function updatePanelPrices() {
+  const type = document.getElementById('panel_type').value;
+  const preset = PANEL_PRICE_PRESETS[type];
+  const wp = state.works.find(x => x.id === 'panel');
+  const mp = state.materials.find(x => x.id === 'm_panel');
+  if (wp) wp.price = preset.work_panel;
+  if (mp) { mp.price = preset.m_panel; mp.sub = preset.m_panel_sub; }
+  renderWorksList();
+  renderMaterialsList();
+}
+
+// ── CALCULATE ──
+function calcTotals() {
+  const totalArea = state.measures.reduce((s, m) => s + Math.max(0, (m.w * m.h) - m.deduct), 0);
+  const slopes = parseFloat(document.getElementById('add_slopes').value) || 0;
+  const flashings = parseFloat(document.getElementById('add_flashings').value) || 0;
+  const sealant = parseFloat(document.getElementById('add_sealant').value) || 0;
+  const complexity = parseFloat(document.getElementById('complexity').value) || 1.0;
+  const ndsRate = parseFloat(document.getElementById('nds_rate').value) / 100 || 0.12;
+  const discountRate = parseFloat(document.getElementById('discount').value) / 100 || 0;
+
+  let worksTotal = 0;
+  const workRows = state.works.filter(w => w.enabled).map(w => {
+    let qty, amount;
+    if (w.type === 'area') { qty = totalArea * complexity; amount = qty * w.price; }
+    else if (w.type === 'slopes') { qty = slopes; amount = qty * w.price; }
+    else if (w.type === 'flashings') { qty = flashings; amount = qty * w.price; }
+    else if (w.type === 'sealant') { qty = sealant; amount = qty * w.price; }
+    else { qty = 1; amount = w.price; } // fixed
+    worksTotal += amount;
+    return { ...w, qty: qty.toFixed(w.type === 'fixed' ? 0 : 1), amount };
+  });
+
+  let matsTotal = 0;
+  const matRows = state.materials.filter(m => m.enabled).map(m => {
+    let qty, amount;
+    if (m.type === 'area') { qty = totalArea * complexity; amount = qty * m.price; }
+    else if (m.type === 'fixed') { qty = 1; amount = m.price; }
+    else if (m.type === 'fixed_per_lm') {
+      qty = slopes + flashings;
+      amount = qty * 900; // approximate per lm
+    }
+    else { qty = totalArea; amount = qty * m.price; }
+    matsTotal += amount;
+    return { ...m, qty: qty.toFixed(1), amount };
+  });
+
+  const subtotal = worksTotal + matsTotal;
+  const discount = subtotal * discountRate;
+  const afterDiscount = subtotal - discount;
+  const nds = afterDiscount * ndsRate;
+  const total = afterDiscount + nds;
+
+  return { totalArea, worksTotal, matsTotal, subtotal, discount, afterDiscount, nds, total, workRows, matRows, slopes, flashings, sealant, complexity };
+}
+
+// ── FORMAT ──
+function fmt(n) {
+  return Math.round(n).toLocaleString('ru-RU') + ' ₸';
+}
+
+function fmtDate(str) {
+  if (!str) return '—';
+  const d = new Date(str);
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+// ── RENDER KP ──
+function render() {
+  const c = calcTotals();
+
+  // Update total strip
+  document.getElementById('total-strip').textContent = fmt(c.total);
+
+  const coName = document.getElementById('co_name').value || 'Ваша компания';
+  const coSlogan = document.getElementById('co_slogan').value || '';
+  const coPhone = document.getElementById('co_phone').value || '';
+  const coEmail = document.getElementById('co_email').value || '';
+  const coAddr = document.getElementById('co_addr').value || '';
+  const coManager = document.getElementById('co_manager').value || '';
+  const coBin = document.getElementById('co_bin').value || '';
+  const kpNum = document.getElementById('kp_num').value || 'КП-001';
+  const kpDate = fmtDate(document.getElementById('kp_date').value);
+  const kpValid = fmtDate(document.getElementById('kp_valid').value);
+
+  const clName = document.getElementById('cl_name').value || 'Заказчик';
+  const clContact = document.getElementById('cl_contact').value || '';
+  const clPhone = document.getElementById('cl_phone').value || '';
+  const clEmail = document.getElementById('cl_email').value || '';
+  const objName = document.getElementById('obj_name').value || 'Объект не указан';
+  const objAddr = document.getElementById('obj_addr').value || '';
+  const objType = document.getElementById('obj_type').value;
+  const objFloors = document.getElementById('obj_floors').value;
+  const panelType = document.getElementById('panel_type').options[document.getElementById('panel_type').selectedIndex].text;
+
+  const termDuration = document.getElementById('term_duration').value;
+  const termWarranty = document.getElementById('term_warranty').value;
+  const termPayment = document.getElementById('term_payment').value;
+  const termIncludes = document.getElementById('term_includes').value;
+  const termNotes = document.getElementById('term_notes').value;
+  const ndsRate = parseFloat(document.getElementById('nds_rate').value) || 12;
+  const discountRate = parseFloat(document.getElementById('discount').value) || 0;
+
+  // Measures chips
+  const measuresHtml = state.measures.map(m => {
+    const area = Math.max(0, (m.w * m.h) - (m.deduct || 0));
+    if (!m.w && !m.h) return '';
+    return `<div class="kp-measure-chip">
+      <div class="kp-measure-chip-name">${m.name}</div>
+      <div class="kp-measure-chip-dims">${m.w} × ${m.h} м</div>
+      ${m.deduct > 0 ? `<div class="kp-measure-chip-area">вычет ${m.deduct} м²</div>` : ''}
+      <div class="kp-measure-chip-area" style="color:var(--accent);font-weight:600;">${area.toFixed(1)} м²</div>
+    </div>`;
+  }).join('');
+
+  // Works table rows
+  const workRowsHtml = c.workRows.map(w =>
+    `<tr>
+      <td><div class="item-name">${w.name}</div><div class="item-sub">${w.sub}</div></td>
+      <td>${w.qty}</td>
+      <td>${w.unit}</td>
+      <td>${Math.round(w.price).toLocaleString('ru-RU')}</td>
+      <td style="font-weight:600;">${fmt(w.amount)}</td>
+    </tr>`
+  ).join('');
+
+  // Materials table rows
+  const matRowsHtml = c.matRows.map(m =>
+    `<tr>
+      <td><div class="item-name">${m.name}</div><div class="item-sub">${m.sub}</div></td>
+      <td>${m.qty}</td>
+      <td>${m.unit}</td>
+      <td>${Math.round(m.price).toLocaleString('ru-RU')}</td>
+      <td style="font-weight:600;">${fmt(m.amount)}</td>
+    </tr>`
+  ).join('');
+
+  const includesList = termIncludes.split('\n').filter(Boolean).map(l =>
+    `<li style="margin-bottom:3px;">✓ ${l.trim()}</li>`
+  ).join('');
+
+  document.getElementById('kp-doc').innerHTML = `
+    <div class="kp-header">
+      <div>
+        <div class="kp-company-name">${coName}</div>
+        <div class="kp-company-slogan">${coSlogan}</div>
+      </div>
+      <div class="kp-doc-info">
+        <div class="kp-doc-number">${kpNum}</div>
+        <div class="kp-doc-date">от ${kpDate}</div>
+        <div class="kp-doc-valid">Действительно до ${kpValid}</div>
+      </div>
+    </div>
+    <div class="kp-strip"></div>
+
+    <div class="kp-body">
+
+      <div class="kp-parties">
+        <div>
+          <div class="kp-party-label">Исполнитель</div>
+          <div class="kp-party-name">${coName}</div>
+          <div class="kp-party-detail">
+            БИН: ${coBin}<br/>
+            ${coAddr}<br/>
+            ${coPhone} · ${coEmail}<br/>
+            Менеджер: ${coManager}
+          </div>
+        </div>
+        <div>
+          <div class="kp-party-label">Заказчик</div>
+          <div class="kp-party-name">${clName}</div>
+          <div class="kp-party-detail">
+            ${clContact ? 'Контакт: ' + clContact + '<br/>' : ''}
+            ${clPhone ? clPhone + '<br/>' : ''}
+            ${clEmail || ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="kp-object-block">
+        <div class="kp-object-label">Объект</div>
+        <div class="kp-object-name">${objName}</div>
+        <div class="kp-object-addr">${objAddr}${objFloors ? ' · ' + objFloors + ' этажей' : ''} · ${objType} · ${panelType}</div>
+      </div>
+
+      ${measuresHtml ? `
+        <div class="kp-section-title">Замеры фасада</div>
+        <div class="kp-measures-grid">${measuresHtml}</div>
+        <div style="text-align:right;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:20px;">
+          Итого площадь фасада: <strong>${c.totalArea.toFixed(1)} м²</strong>
+          ${c.complexity > 1 ? ' · коэф. сложности ×' + c.complexity : ''}
+          ${c.complexity > 1 ? ' = <strong>' + (c.totalArea * c.complexity).toFixed(1) + ' м² (расчётная)</strong>' : ''}
+        </div>
+      ` : ''}
+
+      <div class="kp-section-title">Стоимость монтажных работ</div>
+      <table class="kp-table">
+        <thead>
+          <tr>
+            <th style="width:42%;">Вид работ</th>
+            <th>Кол-во</th>
+            <th>Ед.</th>
+            <th>Цена, ₸</th>
+            <th>Сумма, ₸</th>
+          </tr>
+        </thead>
+        <tbody>${workRowsHtml || '<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:20px;">Нет активных работ</td></tr>'}</tbody>
+        <tfoot>
+          <tr class="subtotal-row">
+            <td colspan="4" style="font-weight:600;">Итого работы</td>
+            <td style="font-weight:700;text-align:right;">${fmt(c.worksTotal)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="kp-section-title" style="margin-top:20px;">Стоимость материалов</div>
+      <table class="kp-table">
+        <thead>
+          <tr>
+            <th style="width:42%;">Материал</th>
+            <th>Кол-во</th>
+            <th>Ед.</th>
+            <th>Цена, ₸</th>
+            <th>Сумма, ₸</th>
+          </tr>
+        </thead>
+        <tbody>${matRowsHtml || '<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:20px;">Нет материалов</td></tr>'}</tbody>
+        <tfoot>
+          <tr class="subtotal-row">
+            <td colspan="4" style="font-weight:600;">Итого материалы</td>
+            <td style="font-weight:700;text-align:right;">${fmt(c.matsTotal)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="kp-totals">
+        <div class="kp-totals-breakdown">
+          <div class="kp-total-item">
+            <div class="kp-total-label">Работы</div>
+            <div class="kp-total-val">${fmt(c.worksTotal)}</div>
+          </div>
+          <div class="kp-total-item">
+            <div class="kp-total-label">Материалы</div>
+            <div class="kp-total-val">${fmt(c.matsTotal)}</div>
+          </div>
+          ${discountRate > 0 ? `
+          <div class="kp-total-item">
+            <div class="kp-total-label">Скидка ${discountRate*100}%</div>
+            <div class="kp-total-val" style="color:#f9a;">−${fmt(c.discount)}</div>
+          </div>` : ''}
+          <div class="kp-total-item">
+            <div class="kp-total-label">НДС ${ndsRate}%</div>
+            <div class="kp-total-val">${fmt(c.nds)}</div>
+          </div>
+        </div>
+        <div class="kp-total-main">
+          <div class="kp-total-main-label">ИТОГО К ОПЛАТЕ</div>
+          <div class="kp-total-main-val">${fmt(c.total)}</div>
+          <div class="kp-total-main-nds">включая НДС ${ndsRate}%</div>
+        </div>
+      </div>
+
+      <div class="kp-terms">
+        <div class="kp-term-item">
+          <div class="kp-term-label">Срок монтажа</div>
+          <div class="kp-term-val">${termDuration}</div>
+        </div>
+        <div class="kp-term-item">
+          <div class="kp-term-label">Гарантия</div>
+          <div class="kp-term-val">${termWarranty}</div>
+        </div>
+        <div class="kp-term-item">
+          <div class="kp-term-label">Условия оплаты</div>
+          <div class="kp-term-val">${termPayment}</div>
+        </div>
+      </div>
+
+      ${includesList ? `
+        <div style="margin-top:20px;">
+          <div class="kp-section-title">В стоимость включено</div>
+          <ul style="list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;font-size:12px;color:var(--gray-600);">
+            ${includesList}
+          </ul>
+        </div>
+      ` : ''}
+
+      ${termNotes ? `
+        <div class="kp-note">
+          <strong>Примечание:</strong> ${termNotes}
+        </div>
+      ` : ''}
+
+      <div class="kp-signatures">
+        <div>
+          <div class="kp-sig-label">От исполнителя: ${coName}</div>
+          <div class="kp-sig-line" style="height:40px;"></div>
+          <div class="kp-sig-name">${coManager} / подпись / печать</div>
+        </div>
+        <div>
+          <div class="kp-sig-label">От заказчика: ${clName}</div>
+          <div class="kp-sig-line" style="height:40px;"></div>
+          <div class="kp-sig-name">${clContact || 'ФИО'} / подпись / печать</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="kp-footer">
+      <div class="kp-footer-contacts">
+        ${coPhone} · ${coEmail} · ${coAddr}
+      </div>
+      <div class="kp-footer-page">${kpNum} · стр. 1</div>
+    </div>
+  `;
+}
+
+function resetForm() {
+  if (!confirm('Сбросить все данные?')) return;
+  document.querySelectorAll('input[type=text], input[type=number], input[type=tel], input[type=date]').forEach(i => {
+    if (i.id !== 'kp_date' && i.id !== 'kp_valid') i.value = '';
+  });
+  state.measures = [];
+  measureCounter = 0;
+  state.works = DEFAULT_WORKS.map(w => ({...w}));
+  state.materials = DEFAULT_MATERIALS.map(m => ({...m}));
+  renderMeasuresList();
+  renderWorksList();
+  renderMaterialsList();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
